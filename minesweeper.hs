@@ -1,5 +1,4 @@
 --Reasons about the positions of the mines and safe cells on a Minesweeper board.
---Cannot solve ambiguous boards so far.
 
 import Data.Array
 import Data.List (nub, foldr1)
@@ -130,8 +129,8 @@ analyzeCell board pos =
 
 --Executes analyzeCell on all revealed cells in the board and concatenates
 --the answers, removing duplicates.
-analyzeBoard :: GameBoard -> Maybe [Conclusion]
-analyzeBoard board
+analyzeCells :: GameBoard -> Maybe [Conclusion]
+analyzeCells board
     | any isNothing resultMaybes = Nothing
     | otherwise = Just $ nub . concat $ catMaybes resultMaybes
     where
@@ -149,14 +148,14 @@ noteAnalysis conclusions oldBoard =
 
 --Repeatedly analyzes the board and concatenates all
 --conclusions until nothing else can be inferred about the board
-analyzeShallow :: GameBoard -> Maybe [Conclusion]
-analyzeShallow board = case analysis of
+analyzeBoard :: GameBoard -> Maybe [Conclusion]
+analyzeBoard board = case analysis of
     Nothing -> Nothing
     Just [] -> Just []
     otherwise -> combineMaybe analysis $ 
-        analyzeShallow (noteAnalysis (fromJust analysis) board)
+        analyzeBoard (noteAnalysis (fromJust analysis) board)
     where
-        analysis = analyzeBoard board
+        analysis = analyzeCells board
         combineMaybe a b = 
             if (isNothing a || isNothing b) 
                 then Nothing
@@ -166,21 +165,21 @@ analyzeShallow board = case analysis of
 --or safe and checking for contradictions further on.
 --If a cell is marked safe and it results in a contradiction, the cell
 --must be dangerous and vice versa.
-deepAnalyzeCell :: GameBoard -> Position -> Maybe [Conclusion]
-deepAnalyzeCell board pos
+backtrackCell :: GameBoard -> Position -> Maybe [Conclusion]
+backtrackCell board pos
     | (isNothing withMineResult) && (isNothing withoutMineResult) = Nothing
     | isNothing withMineResult = liftA2 (++) (Just [Safe pos]) withoutMineResult
     | isNothing withoutMineResult = liftA2 (++) (Just [Mine pos]) withMineResult
     | otherwise = Just []
     where
-        withMineResult    = analyzeShallow $ board // [(pos, AssumedMine)]
-        withoutMineResult = analyzeShallow $ board // [(pos, AssumedSafe)]
+        withMineResult    = analyzeBoard $ board // [(pos, AssumedMine)]
+        withoutMineResult = analyzeBoard $ board // [(pos, AssumedSafe)]
 
---Executes deepAnalyzeCell on all unknown cells in the board and concatenates
---the answers.
-deepAnalyzeBoard :: GameBoard -> [Conclusion]
-deepAnalyzeBoard board = nub . concat $ 
-    catMaybes $ map (deepAnalyzeCell board) unknownNeighbouredCells
+--Executes backtrackCell on all unknown cells near the revealed ones
+--and concatenates the answers.
+solveBoard :: GameBoard -> [Conclusion]
+solveBoard board = nub . concat $ 
+    catMaybes $ map (backtrackCell board) unknownNeighbouredCells
     where
         unknownNeighbouredCells = 
             filter (\pos -> any (isRevealed board) (getNeighbours board pos))
