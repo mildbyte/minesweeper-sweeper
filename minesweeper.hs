@@ -5,7 +5,7 @@ import Data.List (nub, foldr1)
 import Data.Maybe (catMaybes, isNothing, fromJust)
 import Control.Applicative (liftA2)
 
---A position of in the grid (row, column)
+--A position in the grid (row, column)
 type Position = (Integer, Integer)
 
 --What's in the cell?
@@ -18,7 +18,8 @@ data CellState = Unknown           --Unrevealed
 --The playing field
 type GameBoard = Array Position CellState
 
---Turns a string of characters into a board
+--Turns a string of characters into a board.
+--I should really make it an instance of Read
 parseBoard :: String -> [CellState]
 parseBoard = map parseSymbol
 
@@ -28,7 +29,7 @@ parseSymbol c
     | c == 'F' = AssumedMine 
     | otherwise = Revealed $ read [c]
 
---An unambiguous board 
+--Some boards for testing purposes.
 testBoard = listArray ((0,0), (7,7)) $ parseBoard $
     "........" ++
     "2211...." ++
@@ -56,18 +57,6 @@ testBoard2 = listArray ((0,0), (15, 15)) $ parseBoard $
     "111000002......." ++
     "..1111002......." ++
     ".....1002......."
-
---Ambiguous board, we have to make assumptions and check for contradictions to
---proceed.
-testBoardComplex = listArray ((0,0), (7,7)) $ parseBoard $
-    "001F1111" ++
-    "111111F1" ++
-    "F1000111" ++
-    "11111000" ++
-    "113F3100" ++
-    "...FF221" ++
-    "........" ++
-    "........"
 
 --A conclusion about an unrevealed position
 data Conclusion = Mine Position
@@ -184,4 +173,3 @@ solveBoard board = nub . concat $
         unknownNeighbouredCells = 
             filter (\pos -> any (isRevealed board) (getNeighbours board pos))
                 $ filterType Unknown board $ range $ bounds board
-
