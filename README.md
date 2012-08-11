@@ -31,12 +31,12 @@ tries to find out whether the cell has some neighbours that surely have a mine o
 are empty. It also detects contradictions (e.g. more mines around the cell than
 there are unrevealed cells) that would then get signalled back to `backtrackCell`. 
 `analyzeCells` then concatenates everything that `analyzeCell` inferred about
-every cell (if there was a contradiction, `analyzeCells` returns `Nothing`.
+every cell (if there was a contradiction, `analyzeCells` returns `Nothing`).
 
 `analyzeBoard` repeatedly calls `analyzeCells`, gets its conclusions and applies
 them to the game board until `analyzeCells` cannot infer anything else about the
 board (this should be the time when `backtrackCell` is called again to get some
-more information`
+more information`).
 
 Known problems
 --------------
