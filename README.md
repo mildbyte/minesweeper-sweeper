@@ -23,7 +23,8 @@ How does it work
 `backtrackCell`sets the cell to either having or not having a mine and calls
 `analyzeBoard` on every variant. If both variants are valid, we cannot know for
 sure whether the cell is dangerous. If both are invalid, whatever assumption
-brought us to this position is invalid.
+brought us to this position is invalid. Otherwise, the not-invalid variant has to
+be valid and whatever results we got from making that assumption are returned.
 
 `analyzeCells` calls `analyzeCell` on every revealed cell on the board. It
 tries to find out whether the cell has some neighbours that surely have a mine or
