@@ -1,9 +1,10 @@
 --Reasons about the positions of the mines and safe cells on a Minesweeper board.
 
 import Data.Array
-import Data.List (nub, foldr1)
+import Data.List (nub, foldr1, foldl')
 import Data.Maybe (catMaybes, isNothing, fromJust)
 import Control.Applicative (liftA2)
+import qualified Data.Set as S
 
 --A position in the grid (row, column)
 type Position = (Integer, Integer)
@@ -61,7 +62,7 @@ testBoard2 = listArray ((0,0), (15, 15)) $ parseBoard $
 --A conclusion about an unrevealed position
 data Conclusion = Mine Position
                 | Safe Position 
-                deriving (Eq, Show)
+                deriving (Eq, Show, Ord)
 
 --Lists the coordinates of the neighbours of a cell
 getNeighbours :: GameBoard -> Position -> [Position]
@@ -166,10 +167,22 @@ backtrackCell board pos
 
 --Executes backtrackCell on all unknown cells near the revealed ones
 --and concatenates the answers.
+--Uses a set to ensure cells aren't inspected twice.
 solveBoard :: GameBoard -> [Conclusion]
-solveBoard board = nub . concat $ 
-    catMaybes $ map (backtrackCell board) unknownNeighbouredCells
+solveBoard board = S.toList $ foldl' foldingFunction S.empty unknownNeighbouredCells 
     where
         unknownNeighbouredCells = 
             filter (\pos -> any (isRevealed board) (getNeighbours board pos))
                 $ filterType Unknown board $ range $ bounds board
+
+        --If the inspected position is already in the set, return the original set,
+        --otherwise, inspect it and append the results to the set.
+        foldingFunction :: S.Set Conclusion -> Position -> S.Set Conclusion
+        foldingFunction oldSet pos
+            | (S.member (Safe pos) oldSet) || (S.member (Mine pos) oldSet) = oldSet
+            | otherwise = 
+                S.union oldSet $ S.fromList . unpackMaybeList $ backtrackCell board pos
+        
+        unpackMaybeList :: Maybe [a] -> [a]
+        unpackMaybeList Nothing   = []
+        unpackMaybeList (Just xs) = xs

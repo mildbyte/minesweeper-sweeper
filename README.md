@@ -24,7 +24,8 @@ How does it work
 `analyzeBoard` on every variant. If both variants are valid, we cannot know for
 sure whether the cell is dangerous. If both are invalid, whatever assumption
 brought us to this position is invalid. Otherwise, the not-invalid variant has to
-be valid and whatever results we got from making that assumption are returned.
+be valid and whatever results we got from making that assumption are returned. It
+also keeps track of what cells we've visited to avoid working on them twice.
 
 `analyzeCells` calls `analyzeCell` on every revealed cell on the board. It
 tries to find out whether the cell has some neighbours that surely have a mine or
@@ -44,8 +45,6 @@ Known problems
 I have just realised that `backtrackCell` doesn't quite call itself, so there is
 no backtracking. Also:
 
-* `solveBoard` calls `backtrackCell` on every cell even if a previous call inferred
-  something about the cells `backtrackCell` would next be called on.
 * `analyzeCells` calls `analyzeCell` on every revealed cell, even those with 0 mines
   or those not bordering any unopened cells.
 * Some weird stuff going on with packing and unpacking things into `Maybe`.
