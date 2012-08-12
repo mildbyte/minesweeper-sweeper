@@ -11,10 +11,11 @@ tinkering with API).
 Usage
 -----
 
-It doesn't exactly have an interface yet. Use `parseBoard` to convert a string of
-characters to a list of cell states ("." - unrevealed, "F" - flagged, digit -
-revealed with a number of mines (0 for empty cell)), then `listArray (startcoords,
-endcoords) $ parseBoard` to create the array. Then feed it to `solveBoard`.
+Launch the compiled executable (or the main function), enter the width and the
+height of the field (separated with a new line), then width * height characters
+representing the state of each cell ("." - unrevealed, "F" - flagged, digit -
+revealed with a number of mines (0 for empty cell)). You will get a list of
+positions of mines and safecells.
 
 How does it work
 ----------------

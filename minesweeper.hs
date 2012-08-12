@@ -7,7 +7,7 @@ import Control.Applicative (liftA2)
 import qualified Data.Set as S
 
 --A position in the grid (row, column)
-type Position = (Integer, Integer)
+type Position = (Int, Int)
 
 --What's in the cell?
 data CellState = Unknown           --Unrevealed
@@ -195,3 +195,18 @@ solveBoard board = S.toList $ foldl' foldingFunction S.empty unknownNeighbouredC
         unpackMaybeList :: Maybe [a] -> [a]
         unpackMaybeList Nothing   = []
         unpackMaybeList (Just xs) = xs
+
+readInt :: IO Int
+readInt = fmap read getLine
+
+inputBoard :: IO GameBoard
+inputBoard = do
+    boardWidth <- readInt 
+    boardHeight <- readInt 
+    boardList <- fmap 
+        (take (boardWidth * boardHeight) . filter (flip elem "012345678.F"))
+        getContents
+    return $ listArray ((0, 0), (boardWidth - 1, boardHeight - 1)) $ parseBoard boardList
+
+main :: IO ()
+main = print =<< fmap solveBoard inputBoard
