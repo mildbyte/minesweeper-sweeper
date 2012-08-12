@@ -86,6 +86,13 @@ isRevealed board pos =
         Revealed _ -> True
         otherwise  -> False
 
+--Is the cell unknown?
+isUnknown :: GameBoard -> Position -> Bool
+isUnknown board pos =
+    case board ! pos of
+        Unknown    -> True
+        otherwise -> False
+
 --Reasons about a single cell:
 --  * If the number of flags around it is the same as the
 --    number of mines, all unknown cells around it are safe.
@@ -117,15 +124,17 @@ analyzeCell board pos =
             noUnknownCells = length unknownNeighbours
             noSafeCells = length safeNeighbours
 
---Executes analyzeCell on all revealed cells in the board and concatenates
+--Executes analyzeCell on all revealed cells with unknown neighbours and concatenates
 --the answers, removing duplicates.
 analyzeCells :: GameBoard -> Maybe [Conclusion]
 analyzeCells board
     | any isNothing resultMaybes = Nothing
     | otherwise = Just $ nub . concat $ catMaybes resultMaybes
     where
-        revealedCells = filter (isRevealed board) $ range $ bounds board
-        resultMaybes = map (analyzeCell board) revealedCells
+        revealedNeighbouredCells = 
+            filter (\pos -> any (isUnknown board) $ getNeighbours board pos) 
+            $ filter (isRevealed board) $ range $ bounds board
+        resultMaybes = map (analyzeCell board) revealedNeighbouredCells
 
 --Records all conclusions on the game board
 noteAnalysis :: [Conclusion] -> GameBoard -> GameBoard

@@ -27,12 +27,13 @@ brought us to this position is invalid. Otherwise, the not-invalid variant has t
 be valid and whatever results we got from making that assumption are returned. It
 also keeps track of what cells we've visited to avoid working on them twice.
 
-`analyzeCells` calls `analyzeCell` on every revealed cell on the board. It
-tries to find out whether the cell has some neighbours that surely have a mine or
-are empty. It also detects contradictions (e.g. more mines around the cell than
-there are unrevealed cells) that would then get signalled back to `backtrackCell`. 
-`analyzeCells` then concatenates everything that `analyzeCell` inferred about
-every cell (if there was a contradiction, `analyzeCells` returns `Nothing`).
+`analyzeCells` calls `analyzeCell` on every revealed cell on the board that has
+unknown neighbours. It tries to find out whether the cell has some neighbours that
+surely have a mine or are empty. It also detects contradictions (e.g. more mines
+around the cell than there are unrevealed cells) that would then get signalled back
+to `backtrackCell`. `analyzeCells` then concatenates everything that `analyzeCell`
+inferred about every cell (if there was a contradiction, `analyzeCells` returns
+`Nothing`).
 
 `analyzeBoard` repeatedly calls `analyzeCells`, gets its conclusions and applies
 them to the game board until `analyzeCells` cannot infer anything else about the
@@ -45,8 +46,6 @@ Known problems
 I have just realised that `backtrackCell` doesn't quite call itself, so there is
 no backtracking. Also:
 
-* `analyzeCells` calls `analyzeCell` on every revealed cell, even those with 0 mines
-  or those not bordering any unopened cells.
 * Some weird stuff going on with packing and unpacking things into `Maybe`.
 * The code is a bit rough and has some operations it would be useful to generalise.
 * Something else.
