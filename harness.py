@@ -264,3 +264,10 @@ squaresHor = int(raw_input())
 print "Recognizing the dimensions of the grid..."
 (topSide, bottomSide, leftSide, rightSide, squareSide, squaresVer) = recognizeDimensions(bitmap)
 print "Recognized. Don't you dare to resize the window anymore!"
+
+print "Opening a starting position..."
+clickAtCell (int(squaresHor/2), int(squaresVer/2))
+
+print "Let's do it!"
+
+loopAll()
