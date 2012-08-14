@@ -1,7 +1,7 @@
 --Reasons about the positions of the mines and safe cells on a Minesweeper board.
 
 import Data.Array
-import Data.List (nub, foldr1, foldl')
+import Data.List (nub, foldr1, foldl', intersperse)
 import Data.Maybe (catMaybes, isNothing, fromJust)
 import Control.Applicative (liftA2)
 import qualified Data.Set as S
@@ -208,5 +208,9 @@ inputBoard = do
         getContents
     return $ listArray ((0, 0), (boardWidth - 1, boardHeight - 1)) $ parseBoard boardList
 
+--Formats the conclusions into a nice string.
+showConclusions :: [Conclusion] -> String
+showConclusions = concat . intersperse "\n" . map show
+
 main :: IO ()
-main = print =<< fmap solveBoard inputBoard
+main = putStr =<< fmap (showConclusions . solveBoard) inputBoard
