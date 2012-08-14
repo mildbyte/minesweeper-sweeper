@@ -31,6 +31,7 @@ parseSymbol c
     | otherwise = Revealed $ read [c]
 
 --Some boards for testing purposes.
+testBoard :: GameBoard
 testBoard = listArray ((0,0), (7,7)) $ parseBoard $
     "........" ++
     "2211...." ++
@@ -41,6 +42,7 @@ testBoard = listArray ((0,0), (7,7)) $ parseBoard $
     "001....." ++
     "001....."
 
+testBoard2 :: GameBoard
 testBoard2 = listArray ((0,0), (15, 15)) $ parseBoard $ 
     "................" ++
     "................" ++
