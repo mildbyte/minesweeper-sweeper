@@ -34,6 +34,7 @@ The usage is as follows:
   the position of the grid.
 * The harness then will solve your board for you (not completely, see Issues),
   sometimes asking you for the contents of the cells it did not recognize
+
 How does it work
 ----------------
 
