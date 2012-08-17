@@ -95,6 +95,11 @@ isUnknown board pos =
         Unknown    -> True
         otherwise -> False
 
+combineMaybe :: Maybe [a] -> Maybe [a] -> Maybe [a]
+combineMaybe a b = if (isNothing a || isNothing b) 
+                   then Nothing
+                   else liftA2 (++) a b 
+
 --Reasons about a single cell:
 --  * If the number of flags around it is the same as the
 --    number of mines, all unknown cells around it are safe.
@@ -157,30 +162,28 @@ analyzeBoard board = case analysis of
         analyzeBoard (noteAnalysis (fromJust analysis) board)
     where
         analysis = analyzeCells board
-        combineMaybe a b = 
-            if (isNothing a || isNothing b) 
-                then Nothing
-                else liftA2 (++) a b 
 
 --Performs a deep analysis of an unknown cell by marking it dangerous
 --or safe and checking for contradictions further on.
 --If a cell is marked safe and it results in a contradiction, the cell
 --must be dangerous and vice versa.
-backtrackCell :: GameBoard -> Position -> Maybe [Conclusion]
-backtrackCell board pos
+backtrackCell :: GameBoard -> Position 
+              -> S.Set Conclusion -> Maybe (S.Set Conclusion)
+backtrackCell board pos oldSet
     | (isNothing withMineResult) && (isNothing withoutMineResult) = Nothing
-    | isNothing withMineResult = liftA2 (++) (Just [Safe pos]) withoutMineResult
-    | isNothing withoutMineResult = liftA2 (++) (Just [Mine pos]) withMineResult
-    | otherwise = Just []
+    | isNothing withMineResult = fmap (S.insert $ Safe pos) withoutMineResult
+    | isNothing withoutMineResult = fmap (S.insert $ Mine pos) withMineResult
+    | otherwise = Just S.empty
     where
-        withMineResult    = analyzeBoard $ board // [(pos, AssumedMine)]
-        withoutMineResult = analyzeBoard $ board // [(pos, AssumedSafe)]
+        withMineResult    = solveBoard (board // [(pos, AssumedMine)]) oldSet
+        withoutMineResult = solveBoard (board // [(pos, AssumedSafe)]) oldSet
 
 --Executes backtrackCell on all unknown cells near the revealed ones
 --and concatenates the answers.
 --Uses a set to ensure cells aren't inspected twice.
-solveBoard :: GameBoard -> [Conclusion]
-solveBoard board = S.toList $ foldl' foldingFunction S.empty unknownNeighbouredCells 
+backtrackBoard :: GameBoard -> S.Set Conclusion -> Maybe (S.Set Conclusion)
+backtrackBoard board startSet 
+    = foldl' foldingFunction (return startSet) unknownNeighbouredCells 
     where
         unknownNeighbouredCells = 
             filter (\pos -> any (isRevealed board) (getNeighbours board pos))
@@ -188,15 +191,36 @@ solveBoard board = S.toList $ foldl' foldingFunction S.empty unknownNeighbouredC
 
         --If the inspected position is already in the set, return the original set,
         --otherwise, inspect it and append the results to the set.
-        foldingFunction :: S.Set Conclusion -> Position -> S.Set Conclusion
-        foldingFunction oldSet pos
-            | (S.member (Safe pos) oldSet) || (S.member (Mine pos) oldSet) = oldSet
-            | otherwise = 
-                S.union oldSet $ S.fromList . unpackMaybeList $ backtrackCell board pos
-        
+        foldingFunction :: Maybe (S.Set Conclusion)
+                        -> Position
+                        -> Maybe (S.Set Conclusion)
+        foldingFunction Nothing _ = Nothing
+        foldingFunction (Just oldSet) pos
+            | (S.member (Safe pos) oldSet) || (S.member (Mine pos) oldSet) 
+              = Just oldSet
+            | otherwise = case resultSet of
+                  Nothing  -> Nothing
+                  Just newSet -> Just $ S.union oldSet newSet
+            where        
+                resultSet = backtrackCell board pos oldSet
+
         unpackMaybeList :: Maybe [a] -> [a]
         unpackMaybeList Nothing   = []
         unpackMaybeList (Just xs) = xs
+
+--First do the normal (non-backtracking) analysis until there is nothing to infer
+--Then do the backtracking
+solveBoard :: GameBoard -> S.Set Conclusion -> Maybe (S.Set Conclusion)
+solveBoard board startSet = case analyzeBoard board of
+    Nothing                -> Nothing
+    Just normalConclusions -> if null normalConclusions
+                              then backtrackBoard board startSet
+                              else Just $ S.fromList normalConclusions
+
+solveBoardWrapper :: GameBoard -> [Conclusion]
+solveBoardWrapper board = case solveBoard board S.empty of
+    Nothing -> []
+    Just cs -> S.toList cs
 
 readInt :: IO Int
 readInt = fmap read getLine
@@ -214,5 +238,8 @@ inputBoard = do
 showConclusions :: [Conclusion] -> String
 showConclusions = concat . intersperse "\n" . map show
 
+--Inputs the board and solves it
+--Safe to use fromJust since the board has to be valid
+--and the program has to fail otherwise.
 main :: IO ()
-main = putStr =<< fmap (showConclusions . solveBoard) inputBoard
+main = putStr =<< fmap (showConclusions . solveBoardWrapper) inputBoard
