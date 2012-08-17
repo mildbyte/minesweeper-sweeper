@@ -239,7 +239,5 @@ showConclusions :: [Conclusion] -> String
 showConclusions = concat . intersperse "\n" . map show
 
 --Inputs the board and solves it
---Safe to use fromJust since the board has to be valid
---and the program has to fail otherwise.
 main :: IO ()
 main = putStr =<< fmap (showConclusions . solveBoardWrapper) inputBoard
