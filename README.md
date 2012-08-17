@@ -40,9 +40,9 @@ How does it work
 
 ***The solver***
 
-`solveBoard` applies `backtrackCell` to every empty cell on the board. 
+`backtrackBoard` applies `backtrackCell` to every empty cell on the board. 
 `backtrackCell`sets the cell to either having or not having a mine and calls
-`analyzeBoard` on every variant. If both variants are valid, we cannot know for
+`solveBoard` on every variant. If both variants are valid, we cannot know for
 sure whether the cell is dangerous. If both are invalid, whatever assumption
 brought us to this position is invalid. Otherwise, the not-invalid variant has to
 be valid and whatever results we got from making that assumption are returned. It
@@ -58,8 +58,14 @@ inferred about every cell (if there was a contradiction, `analyzeCells` returns
 
 `analyzeBoard` repeatedly calls `analyzeCells`, gets its conclusions and applies
 them to the game board until `analyzeCells` cannot infer anything else about the
-board (this should be the time when `backtrackCell` is called again to get some
-more information`).
+board.
+
+The actual solver works by first applying `analyzeBoard` to the board. If that
+cannot help, only then it uses `backtrackBoard`. Despite that everything is padded
+with sets to prevent from doing work several times, `backtrackBoard` is still
+really slow (only after writing it I realised that Minesweeper is NP-complete), so
+it is called only as last resort and only recurses while nothing can be inferred
+about the board.
 
 ***The harness***
 
@@ -84,13 +90,17 @@ to output.
 Known problems
 --------------
 
-* There is no backtracking: `backtrackCell` never calls itself again, so the program
-  can't solve all boards (and can't even solve some obvious ones).
+* `backtrackCell` is slow (in fact, it is O(2^n)), so most boards take a long time
+  to solve.
+* The solver doesn't take into account the amount of mines remaining on the field.
+* When it can't infer anything at all, it doesn't start guessing or using
+  probabilistic methods.
 * The image recognition is quite slow, taking ~1 second (there is also a delay of 0.5
   seconds in the screenshot routine between activating the window and taking the
   screenshot to ensure the window has been redrawn and is in the foreground).
 * It doesn't recognise when the board has been solved and so even tries to recognise
   the cells on the high score screen.
-* Some weird stuff going on with packing and unpacking things into `Maybe`.
+* Some weird stuff going on with packing and unpacking things into `Maybe` and
+  making a big mess with sets.
 * The code is a bit rough and has some operations it would be useful to generalise.
 * Something else.
